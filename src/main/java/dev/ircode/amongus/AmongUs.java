@@ -1,10 +1,13 @@
 package dev.ircode.amongus;
 
+import dev.ircode.amongus.database.connector;
 import dev.ircode.amongus.Utils.Utils;
+import dev.ircode.amongus.database.query;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
 import java.io.IOException;
+import java.sql.SQLException;
 
 public final class AmongUs extends JavaPlugin {
 
@@ -16,7 +19,9 @@ public final class AmongUs extends JavaPlugin {
     }
 
 
-
+    public static void dbConfiguration() throws SQLException {
+        connector.getDatabaseConnection().createStatement().executeQuery(query.ArenaTable);
+    }
 
     public void registeringEvents() {
 
@@ -62,6 +67,11 @@ public final class AmongUs extends JavaPlugin {
             loadConfiguration();
         } catch (IOException e) {
             e.printStackTrace();
+        }
+        try {
+            dbConfiguration();
+        } catch (SQLException throwables) {
+            throwables.printStackTrace();
         }
         registeringEvents();
         registerCommands();
