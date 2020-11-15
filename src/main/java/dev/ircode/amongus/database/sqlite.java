@@ -8,7 +8,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class sqlite {
-    public final Connection getSqliteConnection() {
+    public static Connection getSqliteConnection() {
         File db = new File(AmongUs.getInstance().getDataFolder() + "/AmongUS.db");
         try {
             Class.forName("org.sqlite.JDBC");
