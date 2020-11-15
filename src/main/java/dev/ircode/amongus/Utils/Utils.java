@@ -6,6 +6,7 @@ import org.bukkit.ChatColor;
 public class Utils {
 
 
+
     public static String color(String color) {
         return ChatColor.translateAlternateColorCodes('&', color);
     }
