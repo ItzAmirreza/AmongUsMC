@@ -1,1 +1,5 @@
 prefix: '&eAmong&cUS &7» '
+messages:
+  help:
+    - 'Plugin Help Page'
+    - '/au <show help page>'
