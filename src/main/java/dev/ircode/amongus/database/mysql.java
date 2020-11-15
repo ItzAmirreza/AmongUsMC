@@ -13,7 +13,7 @@ public class mysql {
     public final String database = AmongUs.getInstance().getConfig().getString("mysql.database");
     public final Boolean use_ssl = AmongUs.getInstance().getConfig().getBoolean("mysql.usessl");
 
-    public final Connection getNewConnection() {
+    public final Connection getMysqlConnection() {
         if (AmongUs.getInstance().getConfig().getBoolean("mysql.enable")) {
             try {
                 Class.forName("com.mysql.jdbc.Driver");
