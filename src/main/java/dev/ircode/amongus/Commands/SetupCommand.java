@@ -92,6 +92,24 @@ public class SetupCommand implements CommandExecutor {
     }
 
 
+
+
+
+    private void setSpawnPoint(Player player, String[] args) {
+
+        if (args.length == 2) {
+
+
+
+        } else {
+
+            player.sendMessage(Utils.color("&4Bad usage: &c/au setspawn [Arena name]"));
+
+        }
+
+    }
+
+
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
 

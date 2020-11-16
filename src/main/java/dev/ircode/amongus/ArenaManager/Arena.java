@@ -8,7 +8,6 @@ import java.util.UUID;
 public class Arena {
 
     private final String name;
-    private final UUID uuid;
     private final String worldName;
     private final int min_players;
     private final int max_players;
@@ -22,9 +21,8 @@ public class Arena {
 
 
 
-    public Arena(String name, UUID uuid, String worldName, int min_players, int max_players, Location waitingLocation, ArrayList<Location> spawnLocations) {
+    public Arena(String name, String worldName, int min_players, int max_players, Location waitingLocation, ArrayList<Location> spawnLocations) {
         this.name = name;
-        this.uuid = uuid;
         this.min_players = min_players;
         this.max_players = max_players;
         this.waitingLocation = waitingLocation;
@@ -72,9 +70,6 @@ public class Arena {
         return this.name;
     }
 
-    public UUID getUUID() {
-        return this.uuid;
-    }
 
     public ArrayList<Player> getPlayers() {
         return this.players;
