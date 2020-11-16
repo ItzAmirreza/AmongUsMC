@@ -56,7 +56,7 @@ public class connector {
         }
     }
 
-    public ResultSet update(String Table_name, String name, String value, String value_type , String Condition_name, String Condition_value) throws SQLException {
+    public static ResultSet update(String Table_name, String name, String value, String value_type , String Condition_name, String Condition_value) throws SQLException {
         String Query;
         if (value_type.equalsIgnoreCase("string") || value_type.equalsIgnoreCase("int"))  {
             Query = "UPDATE `" + Table_name + "` SET `" + name + "`='" + value + "' WHERE " + Condition_name + "=' " + Condition_value + " '";
@@ -66,12 +66,12 @@ public class connector {
         return getDatabaseConnection().createStatement().executeQuery(Query);
     }
 
-    public ResultSet delete(String Table_name, String Condition_name , String Condition_value) throws SQLException {
+    public static ResultSet delete(String Table_name, String Condition_name , String Condition_value) throws SQLException {
         String Query = "DELETE FROM `" + Table_name + "` WHERE " + Condition_name + "='" + Condition_value + "'";
         return getDatabaseConnection().createStatement().executeQuery(Query);
     }
 
-    public ResultSet getSingleRow(String Table_name, String Condition_name, String Condition_value) throws SQLException {
+    public static ResultSet getSingleRow(String Table_name, String Condition_name, String Condition_value) throws SQLException {
         String Query = "SELECT * FROM " + Table_name + " WHERE " + Condition_name + "='" + Condition_value + "' LIMIT 1";
         return getDatabaseConnection().createStatement().executeQuery(Query);
     }

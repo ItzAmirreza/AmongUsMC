@@ -65,7 +65,7 @@ public class Utils {
     public static String Prefix = "&8[&eAmong&cUS&8] ";
     public static String version = "1.0.0";
 
-
-
-
+    public static String[] DBArenaNames = {"name", "min_player", "max_player", "world", "spawn_locations", "waiting_location"};
+    public static String[] DBArenaTypes = {"string", "int", "int", "string", "string", "string"};
+    public static List<Arena> loadedArenas;
 }

@@ -1,10 +1,15 @@
 package dev.ircode.amongus.Commands;
+import com.google.gson.Gson;
 import dev.ircode.amongus.Utils.Utils;
+import dev.ircode.amongus.database.connector;
 import org.bukkit.Location;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
+import org.json.simple.JSONArray;
+
+import java.sql.SQLException;
 import java.util.List;
 
 public class SetupCommand implements CommandExecutor {
@@ -23,9 +28,16 @@ public class SetupCommand implements CommandExecutor {
     public boolean checkIfEveryArgIsOk(String min, String max) {
         boolean result = true;
 
+
+
         try {
-            Integer.parseInt(min);
-            Integer.parseInt(max);
+            int minp = Integer.parseInt(min);
+            int maxp = Integer.parseInt(max);
+
+            if (minp == 0 || maxp == 0) {
+                result = false;
+            }
+
 
         } catch (Exception ex) {
 
@@ -36,7 +48,7 @@ public class SetupCommand implements CommandExecutor {
     }
 
 
-    private void createArena(Player player, String[] args) {
+    private void createArena(Player player, String[] args) throws SQLException {
 
         if (args.length == 4) {
 
@@ -50,10 +62,9 @@ public class SetupCommand implements CommandExecutor {
                 min_players = Integer.parseInt(args[2]);
                 max_players = Integer.parseInt(args[3]);
 
-                //Database set kn mehdi in 3 ta chizaro:
-                //arena name
-                //max players
-                // min players
+
+                String[] values = {arenaname, Integer.toString(min_players), Integer.toString(max_players), "false", "{}", "false"};
+                connector.insert("au_arenas", Utils.DBArenaNames, values, Utils.DBArenaTypes);
 
 
                 player.sendMessage(Utils.color("&aPerfect! Now Go to the waitingLobby of the game and execute: \n &e/au waitingLobby [Arena name]"));
@@ -70,18 +81,19 @@ public class SetupCommand implements CommandExecutor {
 
     }
 
-    private void waitingLobby(Player player, String[] args) {
+    private void waitingLobby(Player player, String[] args) throws SQLException {
 
 
         if (args.length == 2) {
             Location loc = player.getLocation();
             String waitingLocation;
+            String arenaname = args[1];
             waitingLocation = Utils.convertLocToString(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), loc.getWorld().getName(), loc.getPitch(), loc.getYaw());
             //mehdi inja database befrest
             //waitingLocation (String)
 
             player.sendMessage(Utils.color("&aOK, Now you have to set spawning locations for players: \n &e/au setspawn [Arena] \n &e/au removespawn [Arena]"));
-
+            connector.update("au_arenas", "waiting_lobby", waitingLocation, "string", "name", arenaname);
         } else {
 
             player.sendMessage(Utils.color("&4Bad usage: &c/au waitingLobby [Arena name]"));
@@ -91,13 +103,30 @@ public class SetupCommand implements CommandExecutor {
     }
 
 
+    public Gson g = new Gson();
 
-
-
-    private void setSpawnPoint(Player player, String[] args) {
+    private void setSpawnPoint(Player player, String[] args) throws SQLException {
 
         if (args.length == 2) {
+            String arenaname = args[1];
+            int maxcount = connector.getSingleRow("au_arenas", "name", args[1]).getInt("max_player");
+            String locations = connector.getSingleRow("au_arenas", "name", args[1]).getString("spawn_locations");
 
+            if (maxcount == 0) {
+
+                player.sendMessage(Utils.color("&cThere is no arena called " + "&e" + arenaname));
+
+
+            } else {
+
+                String json = g.toJson(locations);
+                //continue tomorrow
+                //int listSize = new JSONArray().size();
+
+                //int remainingCount = maxcount - listSize;
+
+
+            }
 
 
         } else {
@@ -119,12 +148,21 @@ public class SetupCommand implements CommandExecutor {
                 // - /au createarena [Arena name] [Min players] [Max players] - (Creating Arena Command)
                 if (args[0].equalsIgnoreCase("createarena")) {
 
-                        createArena(player, args);
 
-                // - /au waitingLobby [Arena name] - (Getting waiting lobby location)
+                    try {
+                        createArena(player, args);
+                    } catch (SQLException throwables) {
+                        throwables.printStackTrace();
+                    }
+
+                    // - /au waitingLobby [Arena name] - (Getting waiting lobby location)
                 } else if (args[0].equalsIgnoreCase("waitinglobby")) {
 
-                    waitingLobby(player, args);
+                    try {
+                        waitingLobby(player, args);
+                    } catch (SQLException throwables) {
+                        throwables.printStackTrace();
+                    }
 
                 }
 
