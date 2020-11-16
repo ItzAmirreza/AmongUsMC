@@ -24,7 +24,6 @@ public class SetupCommand implements CommandExecutor {
         boolean result = true;
 
         try {
-
             Integer.parseInt(min);
             Integer.parseInt(max);
 
