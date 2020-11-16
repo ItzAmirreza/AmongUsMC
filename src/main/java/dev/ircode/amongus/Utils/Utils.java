@@ -15,6 +15,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.UUID;
 
 public class Utils {
 
@@ -54,6 +55,16 @@ public class Utils {
         MessagesConfig.load(MessagesFile);
         return MessagesConfig;
     }
+
+    public static void logger(String str) {
+        AmongUs.getInstance().getServer().getConsoleSender().sendMessage(color(str));
+    }
+
+    public static List<UUID> waitingForResponse;
+
+    public static String Prefix = "&8[&eAmong&cUS&8] ";
+    public static String version = "1.0.0";
+
 
 
 

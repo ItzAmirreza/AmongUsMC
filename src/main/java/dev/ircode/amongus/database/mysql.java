@@ -1,6 +1,8 @@
 package dev.ircode.amongus.database;
 
 import dev.ircode.amongus.AmongUs;
+import dev.ircode.amongus.Utils.Utils;
+
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -22,7 +24,7 @@ public class mysql {
                 Connection connection = DriverManager.getConnection(url, username, password);
                 return connection;
             } catch (ClassNotFoundException | SQLException e) {
-                AmongUs.getInstance().logger(AmongUs.getInstance().Prefix + "That was error on mysql connection please check config.yml ...");
+                AmongUs.getInstance().logger(Utils.Prefix + "That was error on mysql connection please check config.yml ...");
                 AmongUs.getInstance().getServer().getPluginManager().disablePlugin(AmongUs.getInstance());
                 return null;
             }

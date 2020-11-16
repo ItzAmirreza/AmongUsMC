@@ -1,5 +1,6 @@
 package dev.ircode.amongus;
 
+import dev.ircode.amongus.Commands.SetupCommand;
 import dev.ircode.amongus.database.connector;
 import dev.ircode.amongus.Utils.Utils;
 import dev.ircode.amongus.database.query;
@@ -11,8 +12,6 @@ import java.sql.SQLException;
 
 public final class AmongUs extends JavaPlugin {
 
-    public static String Prefix = "&8[&eAmong&cUS&8] ";
-    public static String version = "1.0.0";
     public static AmongUs instance;
     public static AmongUs getInstance() {
         return instance;
@@ -33,7 +32,7 @@ public final class AmongUs extends JavaPlugin {
     public void registerCommands() {
 
         //register Commands
-
+        getServer().getPluginCommand("amongus").setExecutor(new SetupCommand()); //Registering AmongUs
     }
 
     public void logger(String str) {
@@ -44,17 +43,17 @@ public final class AmongUs extends JavaPlugin {
     public void loadConfiguration() throws IOException {
         saveDefaultConfig();
         if (getConfig().getBoolean("mysql.enable")) {
-            logger(Prefix + "database Storage » Mysql");
-            logger(Prefix + "Connecting Database ...");
+            logger(Utils.Prefix + "database Storage » Mysql");
+            logger(Utils.Prefix + "Connecting Database ...");
             // Database Connector
         } else {
             File db = new File(this.getDataFolder() + "/AmongUS.db");
 
             if (!db.exists()) {
                 db.createNewFile();
-                logger(Prefix + "&eSqlite database has been created !");
+                logger(Utils.Prefix + "&eSqlite database has been created !");
             }
-            logger(Prefix + "database Storage » Sqlite");
+            logger(Utils.Prefix + "database Storage » Sqlite");
         }
     }
 
@@ -62,7 +61,7 @@ public final class AmongUs extends JavaPlugin {
     @Override
     public void onEnable() {
         instance = this;
-        logger(Prefix + "&aStarting AmongUS Version " + version);
+        logger(Utils.Prefix + "&aStarting AmongUS Version " + Utils.version);
         try {
             loadConfiguration();
         } catch (IOException e) {

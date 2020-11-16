@@ -1,6 +1,7 @@
 package dev.ircode.amongus.database;
 
 import dev.ircode.amongus.AmongUs;
+import dev.ircode.amongus.Utils.Utils;
 
 import java.io.File;
 import java.sql.Connection;
@@ -15,7 +16,7 @@ public class sqlite {
             Connection connection = DriverManager.getConnection("jdbc:sqlite:" + db);
             return connection;
         } catch (SQLException | ClassNotFoundException ex) {
-            AmongUs.getInstance().logger(AmongUs.Prefix + "&cSQLite exception on initialize");
+            AmongUs.getInstance().logger(Utils.Prefix + "&cSQLite exception on initialize");
             return null;
         }
 //        catch (ClassNotFoundException ex) {
