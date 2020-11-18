@@ -1,6 +1,9 @@
 package dev.ircode.amongus.database;
 
 import dev.ircode.amongus.AmongUs;
+import org.bukkit.event.inventory.ClickType;
+import sun.tools.jconsole.Tab;
+
 import javax.xml.transform.Result;
 import java.sql.Array;
 import java.sql.Connection;
@@ -56,7 +59,7 @@ public class connector {
         }
     }
 
-    public static ResultSet update(String Table_name, String name, String value, String value_type , String Condition_name, String Condition_value) throws SQLException {
+    public static ResultSet update(String Table_name, String name, String value, String value_type, String Condition_name, String Condition_value) throws SQLException {
         String Query;
         if (value_type.equalsIgnoreCase("string") || value_type.equalsIgnoreCase("int"))  {
             Query = "UPDATE `" + Table_name + "` SET `" + name + "`='" + value + "' WHERE " + Condition_name + "=' " + Condition_value + " '";
@@ -73,6 +76,20 @@ public class connector {
 
     public static ResultSet getSingleRow(String Table_name, String Condition_name, String Condition_value) throws SQLException {
         String Query = "SELECT * FROM " + Table_name + " WHERE " + Condition_name + "='" + Condition_value + "' LIMIT 1";
+        return getDatabaseConnection().createStatement().executeQuery(Query);
+    }
+
+    public static int numRows(String Table_name, String Condition_name , String Condition_value) throws SQLException {
+        String Query = "SELECT COUNT(*) FROM `" +Table_name+ "` WHERE " +Condition_name+ "='" +Condition_value+ "'";
+        return getDatabaseConnection().createStatement().executeQuery(Query).getInt(1);
+    }
+
+    public static int c2NumRows(String Table_name, String Condition_name , String Condition_value, String CCondition_name, String CCondition_value) throws SQLException {
+        String Query = "SELECT COUNT(*) FROM `" +Table_name+ "` WHERE " +Condition_name+ "='" +Condition_value+ "' AND " +CCondition_name+ "='" +CCondition_value+ "'";
+        return getDatabaseConnection().createStatement().executeQuery(Query).getInt(1);
+    }
+    public static ResultSet c2Delete(String Table_name, String Condition_name , String Condition_value,String CCondition_name, String CCondition_value) throws SQLException {
+        String Query = "DELETE FROM `" + Table_name + "` WHERE " + Condition_name + "='" + Condition_value + "' AND " +CCondition_name+ "='"+CCondition_value+"'";
         return getDatabaseConnection().createStatement().executeQuery(Query);
     }
 }

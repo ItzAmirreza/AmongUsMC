@@ -20,6 +20,7 @@ import java.util.UUID;
 public class Utils {
 
 
+    public static HashMap<String, String> HashMap = new HashMap<String, String>();
 
     public static String color(String color) {
         return ChatColor.translateAlternateColorCodes('&', color);
@@ -68,4 +69,5 @@ public class Utils {
     public static String[] DBArenaNames = {"name", "min_player", "max_player", "world", "spawn_locations", "waiting_location"};
     public static String[] DBArenaTypes = {"string", "int", "int", "string", "string", "string"};
     public static List<Arena> loadedArenas;
+
 }
