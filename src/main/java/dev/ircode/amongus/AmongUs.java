@@ -15,12 +15,6 @@ import java.util.List;
 
 public final class AmongUs extends JavaPlugin {
 
-    // Tasks
-    public static String[] TASK_TYPES = {"DOWNLOAD", "UPLOAD", "CART", "RAC_COUNTER", "GUNNER", "LIGHTS", "REPEATER", "ELECTRIC_CONNECTING"};
-    public static List<String> TASK_TYPES_ARRAY_LIST = new ArrayList<String>(Arrays.asList(TASK_TYPES));
-    // Sabotages
-    public static String[] SABOTAGE_TYPES = {"REACTOR1","REACTOR2", "O2", "LIGHTS"};
-    public static List<String> SABOTAGE_TYPES_ARRAY_LIST = new ArrayList<String>(Arrays.asList(SABOTAGE_TYPES));
 
     public static AmongUs instance;
     public static AmongUs getInstance() {

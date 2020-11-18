@@ -2,8 +2,6 @@ package dev.ircode.amongus.database;
 
 import dev.ircode.amongus.AmongUs;
 import org.bukkit.event.inventory.ClickType;
-import sun.tools.jconsole.Tab;
-
 import javax.xml.transform.Result;
 import java.sql.Array;
 import java.sql.Connection;

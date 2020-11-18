@@ -3,31 +3,32 @@ import dev.ircode.amongus.Enums.GameState;
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import java.util.ArrayList;
-import java.util.UUID;
+import java.util.HashMap;
 
 public class Arena {
 
     private final String name;
-    private final String worldName;
+    private String worldName = null;
     private final int min_players;
     private final int max_players;
-    private final Location waitingLocation;
-    private final ArrayList<Location> spawnLocations;
+    private Location waitingLocation = null;
+    private ArrayList<Location> spawnLocations = null;
+    private HashMap<Location, String> sabotagesLocations = null;
+    private HashMap<Location, String> TasksLocations = null;
     private ArrayList<Player> players = new ArrayList<>();
     private ArrayList<Player> imposters = new ArrayList<>();
     private ArrayList<Player> crewmates = new ArrayList<>();
     private GameState gameState = GameState.WAITING;
-    private int passedTime;
+    private int passedTime = 0;
+    private boolean readyness;
 
 
 
-    public Arena(String name, String worldName, int min_players, int max_players, Location waitingLocation, ArrayList<Location> spawnLocations) {
+    public Arena(String name, int min_players, int max_players) {
         this.name = name;
         this.min_players = min_players;
         this.max_players = max_players;
-        this.waitingLocation = waitingLocation;
-        this.spawnLocations = spawnLocations;
-        this.worldName = worldName;
+        this.readyness = false;
     }
 
     public int getPassedTime() {
@@ -65,6 +66,105 @@ public class Arena {
     public void setPassedTime(int adad) {
         this.passedTime = adad;
     }
+
+    public void setWaitingLocation(Location location) {
+        this.waitingLocation = location;
+    }
+
+    public void setSpawnLocations(ArrayList<Location> list) {
+        this.spawnLocations = list;
+    }
+
+    public boolean addSpawnLocation(Location loc) {
+        if (this.spawnLocations.size() + 1 > this.max_players) {
+            return false;
+        } else {
+            this.spawnLocations.add(loc);
+            return true;
+        }
+    }
+
+    public boolean removeLastSpawnLocation() {
+
+        if (!(this.spawnLocations.size() == 0)) {
+
+            this.spawnLocations.remove(this.spawnLocations.get(this.spawnLocations.size() - 1));
+            return true;
+        } else {
+
+            return false;
+        }
+    }
+
+    public void setSabotageLocations(HashMap<Location, String> hash) {
+
+        this.sabotagesLocations = hash;
+
+    }
+
+    public void addSabotageLocation(Location loc, String sabotageType) {
+
+        this.sabotagesLocations.put(loc, sabotageType);
+
+    }
+
+    public boolean removeSabotage(Location loc) {
+        if (this.sabotagesLocations.containsKey(loc)) {
+
+            this.sabotagesLocations.remove(loc);
+            return true;
+
+        } else {
+
+            return false;
+
+        }
+    }
+
+    public HashMap<Location, String> getSabotagesLocations() {
+        return this.sabotagesLocations;
+    }
+
+    public void setTasksLocations(HashMap<Location, String> hash) {
+        this.TasksLocations = hash;
+    }
+
+    public void addTasksLocations(Location loc, String sabotageType) {
+        this.TasksLocations.put(loc, sabotageType);
+    }
+
+    public boolean removeTask(Location loc) {
+        if (this.TasksLocations.containsKey(loc)) {
+            this.TasksLocations.remove(loc);
+            return true;
+
+        } else {
+
+            return false;
+
+        }
+    }
+    public HashMap<Location, String> getTasksLocations() {
+        return this.TasksLocations;
+    }
+
+    public boolean isReady() {
+        return this.readyness;
+    }
+
+    public void setReadyness(boolean ready) {
+
+        this.readyness = ready;
+    }
+
+    public void setWorldName(String str) {
+        this.worldName = str;
+    }
+
+    public String getWorldName() {
+        return this.worldName;
+    }
+
 
     public String getName() {
         return this.name;

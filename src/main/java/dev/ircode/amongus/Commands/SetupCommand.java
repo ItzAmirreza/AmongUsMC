@@ -1,6 +1,9 @@
 package dev.ircode.amongus.Commands;
 import com.google.gson.Gson;
 import dev.ircode.amongus.AmongUs;
+import dev.ircode.amongus.ArenaManager.Arena;
+import dev.ircode.amongus.Enums.GameState;
+import dev.ircode.amongus.Utils.Maps;
 import dev.ircode.amongus.Utils.Utils;
 import dev.ircode.amongus.database.connector;
 import org.bukkit.Location;
@@ -55,16 +58,25 @@ public class SetupCommand implements CommandExecutor {
 
             if (checkCreateArenaArgs(args[2], args[3])) {
 
-                arenaname = args[1];
+                arenaname = args[1].toLowerCase();
                 min_players = Integer.parseInt(args[2]);
                 max_players = Integer.parseInt(args[3]);
 
+                if (checkIfArenaExists(arenaname)) {
 
-                String[] values = {arenaname, Integer.toString(min_players), Integer.toString(max_players), "false", "{}", "false"};
-                connector.insert("au_arenas", Utils.DBArenaNames, values, Utils.DBArenaTypes);
+                    //already exists
 
+                    player.sendMessage(Utils.color("&cThe arena &e" + arenaname + " &calready exists!"));
 
-                player.sendMessage(Utils.color("&aPerfect! Now Go to the waitingLobby of the game and execute: \n &e/au waitingLobby [Arena name]"));
+                } else {
+
+                    String[] values = {arenaname, Integer.toString(min_players), Integer.toString(max_players), "false", "{}", "false"};
+                    connector.insert("au_arenas", Utils.DBArenaNames, values, Utils.DBArenaTypes);
+                    Arena thearena = new Arena(arenaname, min_players, max_players);
+                    Maps.loadedArenas.put(arenaname, thearena);
+                    player.sendMessage(Utils.color("&aPerfect! Now Go to the waitingLobby of the game and execute: \n &e/au waitingLobby [Arena name]"));
+
+                }
 
             } else {
                 player.sendMessage(Utils.color("&4Bad usage: &c/au createarena [Arena name] [Min players] [Max players]"));
@@ -81,14 +93,27 @@ public class SetupCommand implements CommandExecutor {
     private void waitingLobby(Player player, String[] args) throws SQLException {
 
         if (args.length == 2) {
+
             Location loc = player.getLocation();
             String waitingLocation;
-            String arenaname = args[1];
-            waitingLocation = Utils.convertLocToString(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), loc.getWorld().getName(), loc.getPitch(), loc.getYaw());
+            String arenaname = args[1].toLowerCase();
 
-            player.sendMessage(Utils.color("&aOK, Now you have to set spawning locations for players: \n &e/au setspawn [Arena] \n &e/au removespawn [Arena]"));
-            connector.update("au_arenas", "waiting_lobby", waitingLocation, "string", "name", arenaname);
-            connector.update("au_arenas", "world", player.getWorld().getName(), "string", "name", arenaname);
+            if (checkIfArenaExists(arenaname)) {
+                Arena thatarena = Maps.loadedArenas.get(arenaname);
+                waitingLocation = Utils.convertLocToString(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), loc.getWorld().getName(), loc.getPitch(), loc.getYaw());
+                connector.update("au_arenas", "waiting_lobby", waitingLocation, "string", "name", arenaname);
+                connector.update("au_arenas", "world", player.getWorld().getName(), "string", "name", arenaname);
+                thatarena.setWaitingLocation(loc);
+                player.sendMessage(Utils.color("&aOK, Now you have to set spawning locations for players: \n &e/au setspawn [Arena] \n &e/au removespawn [Arena]"));
+
+
+            } else {
+
+                player.sendMessage(Utils.color("&cThis arena whether is not loaded or doesn't exist!"));
+
+            }
+
+
         } else {
 
             player.sendMessage(Utils.color("&4Bad usage: &c/au waitingLobby [Arena name]"));
@@ -102,42 +127,59 @@ public class SetupCommand implements CommandExecutor {
     private void setSpawnPoint(Player player, String[] args) throws SQLException {
 
         if (args.length == 2) {
-            String arenaname = args[1];
-            int maxcount = connector.getSingleRow("au_arenas", "name", args[1]).getInt("max_player");
-            String locations = connector.getSingleRow("au_arenas", "name", args[1]).getString("spawn_locations");
+            String arenaname = args[1].toLowerCase();
 
-            if (maxcount == 0) {
 
-                player.sendMessage(Utils.color("&cThere is no arena called " + "&e" + arenaname));
+            if (checkIfArenaExists(arenaname)) {
+                Arena thatarena = Maps.loadedArenas.get(arenaname);
 
-            } else {
+                int maxcount = connector.getSingleRow("au_arenas", "name", arenaname).getInt("max_player");
+                String locations = connector.getSingleRow("au_arenas", "name", arenaname).getString("spawn_locations");
 
-                String Correct_locations = connector.getSingleRow("au_arenas", "name", arenaname).getString("spawn_locations");
-                if (Correct_locations.equals("{}")) {
-                    int Location_set = g.fromJson(connector.getSingleRow("au_arenas", "name", arenaname).getString("spawn_locations"), List.class).size();
-                    int Location_left = connector.getSingleRow("au_arenas", "name", arenaname).getInt("max_players") - Location_set;
-                    player.sendMessage(Utils.color("&aFirst spawn location has been set ! there are  " + Location_left + " location left ! set more with &c/au setspawn [Arena name]"));
-                    ArrayList<String> spawn_locations = new ArrayList<String>();
-                    Location loc = player.getLocation();
-                    String spawn_location = Utils.convertLocToString(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), loc.getWorld().getName(), loc.getPitch(), loc.getYaw());
-                    spawn_locations.add(spawn_location);
-                    String spawn_locations_string = g.toJson(spawn_locations);
-                    connector.update("au_arenas", "spawn_locations", spawn_locations_string, "string", "name", arenaname);
+                if (maxcount == 0) {
+
+                    player.sendMessage(Utils.color("&cThere is no arena called " + "&e" + arenaname));
+
                 } else {
+
+                    String worldname = player.getWorld().getName();
+                    thatarena.setWorldName(worldname);
+                    connector.update("au_arenas", "worldname", worldname, "string", "name", arenaname);
+                    String Correct_locations = connector.getSingleRow("au_arenas", "name", arenaname).getString("spawn_locations");
+                    if (Correct_locations.equals("{}")) {
                         int Location_set = g.fromJson(connector.getSingleRow("au_arenas", "name", arenaname).getString("spawn_locations"), List.class).size();
                         int Location_left = connector.getSingleRow("au_arenas", "name", arenaname).getInt("max_players") - Location_set;
-                        ArrayList<String> spawn_locations = g.fromJson(locations, ArrayList.class);
+                        player.sendMessage(Utils.color("&aFirst spawn location has been set ! there are  " + Location_left + " location left ! set more with &e/au setspawn [Arena name]"));
+                        ArrayList<String> spawn_locations = new ArrayList<String>();
                         Location loc = player.getLocation();
+                        thatarena.addSpawnLocation(loc);
                         String spawn_location = Utils.convertLocToString(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), loc.getWorld().getName(), loc.getPitch(), loc.getYaw());
                         spawn_locations.add(spawn_location);
                         String spawn_locations_string = g.toJson(spawn_locations);
                         connector.update("au_arenas", "spawn_locations", spawn_locations_string, "string", "name", arenaname);
-                    if (g.fromJson(locations, ArrayList.class).size() != maxcount) {
-                        player.sendMessage(Utils.color("&aNext spawn location has been set ! there are  " + Location_left + " location left ! set more with &c/au setspawn [Arena name]"));
                     } else {
-                        player.sendMessage(Utils.color("&aThat was last spawn location ! now set other thinks:"));
+                        int Location_set = g.fromJson(connector.getSingleRow("au_arenas", "name", arenaname).getString("spawn_locations"), List.class).size();
+                        int Location_left = connector.getSingleRow("au_arenas", "name", arenaname).getInt("max_players") - Location_set;
+                        ArrayList<String> spawn_locations = g.fromJson(locations, ArrayList.class);
+                        Location loc = player.getLocation();
+                        thatarena.addSpawnLocation(loc);
+                        String spawn_location = Utils.convertLocToString(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), loc.getWorld().getName(), loc.getPitch(), loc.getYaw());
+                        spawn_locations.add(spawn_location);
+                        String spawn_locations_string = g.toJson(spawn_locations);
+                        connector.update("au_arenas", "spawn_locations", spawn_locations_string, "string", "name", arenaname);
+                        if (g.fromJson(locations, ArrayList.class).size() != maxcount) {
+                            player.sendMessage(Utils.color("&aNext spawn location has been set ! there are  " + Location_left + " location left ! set more with &e/au setspawn [Arena name]"));
+                        } else {
+                            player.sendMessage(Utils.color("&aAll added! Now you can set Tasks or Sabotages locations"));
+                        }
                     }
+
+
                 }
+
+            } else {
+
+                player.sendMessage(Utils.color("&cThis arena whether is not loaded or doesn't exist!"));
 
 
             }
@@ -153,18 +195,33 @@ public class SetupCommand implements CommandExecutor {
 
     private void removeLastSpawnPoint(Player player, String[] args) throws SQLException {
         if (args.length == 2) {
-            String arenaname = args[1];
-            int maxcount = connector.getSingleRow("au_arenas", "name", args[1]).getInt("max_player");
-            String locations = connector.getSingleRow("au_arenas", "name", args[1]).getString("spawn_locations");
-            ArrayList<String> decoded_locations = g.fromJson(locations, ArrayList.class);
-            if (decoded_locations.size() != maxcount) {
-                decoded_locations.remove(decoded_locations.size() - 1);
-                player.sendMessage("&aYour last Spawn point removed !");
-                String locations_encoded = g.toJson(decoded_locations);
-                connector.update("au_arenas", "spawn_locations", locations_encoded, "string", "name", arenaname);
+            String arenaname = args[1].toLowerCase();
+
+            if (checkIfArenaExists(arenaname)) {
+                Arena thatarena = Maps.loadedArenas.get(arenaname);
+
+                int maxcount = connector.getSingleRow("au_arenas", "name", arenaname).getInt("max_player");
+                String locations = connector.getSingleRow("au_arenas", "name", arenaname).getString("spawn_locations");
+                ArrayList<String> decoded_locations = g.fromJson(locations, ArrayList.class);
+                if (decoded_locations.size() != maxcount) {
+                    thatarena.removeLastSpawnLocation();
+                    decoded_locations.remove(decoded_locations.size() - 1);
+                    player.sendMessage("&aYour last Spawn point removed !");
+                    String locations_encoded = g.toJson(decoded_locations);
+                    connector.update("au_arenas", "spawn_locations", locations_encoded, "string", "name", arenaname);
+
+                } else {
+
+                    player.sendMessage("&cThere is no location that remains.");
+
+                }
+
             } else {
-                player.sendMessage("&cYou set all spawn locations in past ! you can't change it more !");
+
+                player.sendMessage(Utils.color("&cThis arena whether is not loaded or doesn't exist!"));
+
             }
+
         } else {
             player.sendMessage("&cUsage : /au removespawn <arenaname>");
         }
@@ -172,16 +229,32 @@ public class SetupCommand implements CommandExecutor {
 
     private void setTask(Player player, String[] args) throws SQLException {
         if (args.length == 3) {
-            if (AmongUs.TASK_TYPES_ARRAY_LIST.contains(args[2].toUpperCase())) {
-                if (connector.c2NumRows("au_arenas_meta", "name", args[1], "meta_id", args[2].toUpperCase() + "_TASK_LOCATION") == 0) {
-                    String arenaname = args[1];
-                    Location C_Location = player.getTargetBlock(null, 5).getLocation();
+            String arenaname = args[1].toLowerCase();
+
+            if (checkIfArenaExists(arenaname)) {
+
+                Arena thatarena = Maps.loadedArenas.get(arenaname);
+
+                if (Utils.TASK_TYPES_ARRAY_LIST.contains(args[2].toUpperCase())) {
+                    if (connector.c2NumRows("au_arenas_meta", "name", arenaname, "meta_id", args[2].toUpperCase() + "_TASK_LOCATION") == 0) {
+
+                        Location C_Location = player.getTargetBlock(null, 5).getLocation();
+
+                        //????????? badesh chi?
+                    } else {
+                        player.sendMessage("&aYou have set this task location past ! delete it with : /au deletetask <arenaname> " + args[2]);
+                    }
                 } else {
-                    player.sendMessage("You have set this task location past ! delete it with : /au deletetask <arenaname> " + args[2]);
+                    player.sendMessage("&cThere is no task called &e" + args[2]);
                 }
+
             } else {
-                player.sendMessage("There is no task in name " + args[2]);
+
+                player.sendMessage(Utils.color("&cThis arena whether is not loaded or doesn't exist!"));
+
             }
+
+
         } else {
             player.sendMessage("&cUsage : /au settask <arenaname> <task>");
         }
@@ -189,26 +262,40 @@ public class SetupCommand implements CommandExecutor {
 
     private void deleteTask(Player player, String[] args) throws SQLException {
         if (args.length == 3) {
-            if (AmongUs.TASK_TYPES_ARRAY_LIST.contains(args[2].toUpperCase())) {
-                if (connector.c2NumRows("au_arenas_meta", "name", args[1], "meta_id", args[2].toUpperCase() + "_TASK_LOCATION") > 0) {
+            String arenaname = args[1].toLowerCase();
+
+            if (Utils.TASK_TYPES_ARRAY_LIST.contains(args[2].toUpperCase())) {
+
+                if (connector.c2NumRows("au_arenas_meta", "name", arenaname, "meta_id", args[2].toUpperCase() + "_TASK_LOCATION") > 0) {
+
+                    connector.c2Delete("au_arenas_meta", "name", arenaname, "meta_id", args[2].toUpperCase() + "_TASK_LOCATION");
+
                     player.sendMessage("task " + args[2] + "has been deleted !");
-                    connector.c2Delete("au_arenas_meta", "name", args[1], "meta_id", args[2].toUpperCase() + "_TASK_LOCATION");
+
                 } else {
+
                     player.sendMessage("You have'nt set this task yet !");
+
                 }
+
             } else {
+
                 player.sendMessage("There is no task in name " + args[2]);
             }
+
         } else {
+
             player.sendMessage("&cUsage : /au deletetask <arenaname> <task>");
+
         }
     }
 
     private void setSabotage(Player player, String[] args) throws SQLException {
         if (args.length == 3) {
-            if (AmongUs.SABOTAGE_TYPES_ARRAY_LIST.contains(args[2].toUpperCase())) {
-                if (connector.c2NumRows("au_arenas_meta", "name", args[1], "meta_id", args[2].toUpperCase() + "_SABOTAGE_LOCATION") == 0) {
-                    String arenaname = args[1];
+            String arenaname = args[1].toLowerCase();
+            if (Utils.SABOTAGE_TYPES_ARRAY_LIST.contains(args[2].toUpperCase())) {
+                if (connector.c2NumRows("au_arenas_meta", "name", arenaname, "meta_id", args[2].toUpperCase() + "_SABOTAGE_LOCATION") == 0) {
+
                     Location C_Location = player.getTargetBlock(null, 5).getLocation();
                 } else {
                     player.sendMessage("You have set this sabotage location past ! delete it with : /au deletesabotage <arenaname> " + args[2]);
@@ -223,12 +310,13 @@ public class SetupCommand implements CommandExecutor {
 
     private void deleteSabotage(Player player, String[] args) throws SQLException {
         if (args.length == 3) {
-            if (AmongUs.SABOTAGE_TYPES_ARRAY_LIST.contains(args[2].toUpperCase())) {
-                if (connector.c2NumRows("au_arenas_meta", "name", args[1], "meta_id", args[2].toUpperCase() + "_SABOTAGE_LOCATION") > 0) {
+            String arenaname = args[1].toLowerCase();
+            if (Utils.SABOTAGE_TYPES_ARRAY_LIST.contains(args[2].toUpperCase())) {
+                if (connector.c2NumRows("au_arenas_meta", "name", arenaname, "meta_id", args[2].toUpperCase() + "_SABOTAGE_LOCATION") > 0) {
                     player.sendMessage("task " + args[2] + "has been deleted !");
-                    connector.c2Delete("au_arenas_meta", "name", args[1], "meta_id", args[2].toUpperCase() + "_SABOTAGE_LOCATION");
+                    connector.c2Delete("au_arenas_meta", "name", arenaname, "meta_id", args[2].toUpperCase() + "_SABOTAGE_LOCATION");
                 } else {
-                    player.sendMessage("You have'nt set this sabotage yet !");
+                    player.sendMessage("You haven't set this sabotage yet !");
                 }
             } else {
                 player.sendMessage("There is no sabotage in name " + args[2]);
@@ -236,6 +324,39 @@ public class SetupCommand implements CommandExecutor {
         } else {
             player.sendMessage("&cUsage : /au deletesabotage <arenaname> <sabotage>");
         }
+    }
+
+
+
+    private void deleteArena(Player player, String[] args) throws SQLException {
+
+        if (args.length == 2) {
+            String arenaname = args[1].toLowerCase();
+            if (Maps.loadedArenas.containsKey(arenaname)) {
+                Arena thatarena = Maps.loadedArenas.get(arenaname);
+                if (thatarena.getGameState() == GameState.WAITING) {
+                    resetTheArena(thatarena);
+                    connector.delete("au_arenas", "name", arenaname);
+                    Maps.loadedArenas.remove(arenaname);
+
+                    player.sendMessage(Utils.color("&aArena &e" + arenaname + " &asuccessfully deleted!"));
+
+                } else {
+                    player.sendMessage(Utils.color("&cYou can not delete that arena while it is in the game!"));
+                }
+
+            } else {
+
+                player.sendMessage(Utils.color("&cThe arena is whether not loaded or doesn't exist!"));
+
+            }
+
+
+        } else {
+            player.sendMessage("&4Bad usage: &c/au deleteArena <arenaname>");
+        }
+
+
     }
 
     @Override
@@ -264,7 +385,7 @@ public class SetupCommand implements CommandExecutor {
                         throwables.printStackTrace();
                     }
 
-                }
+                }// - /au setspawn
                 else if (args[0].equalsIgnoreCase("setspawn")) {
 
                     try {
@@ -322,6 +443,16 @@ public class SetupCommand implements CommandExecutor {
                     }
 
                 }
+
+                else if (args[0].equalsIgnoreCase("deletearena")) {
+
+                    try {
+                        deleteArena(player, args);
+                    } catch (SQLException throwables) {
+                        throwables.printStackTrace();
+                    }
+
+                }
             } else {
                 try {
                     for (String msg: Utils.getMessages().getStringList("messages.help")) {
@@ -343,4 +474,29 @@ public class SetupCommand implements CommandExecutor {
 
         return false;
     }
+
+    private void resetTheArena(Arena arena) {
+        List<Player> players = arena.getPlayers();
+        for (Player player : players) {
+
+            player.teleport(Utils.lobby);
+
+        }
+    }
+
+    private boolean checkIfArenaExists(String str) {
+
+        if (Maps.loadedArenas.containsKey(str)) {
+
+            return true;
+
+        } else {
+
+            return false;
+
+        }
+
+    }
+
+
 }

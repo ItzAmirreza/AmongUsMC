@@ -1,4 +1,6 @@
 package dev.ircode.amongus.InGameTasks;
 
-public class test {
+public class Timer {
+
+
 }

@@ -9,13 +9,11 @@ import org.bukkit.Location;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 public class Utils {
 
@@ -65,9 +63,45 @@ public class Utils {
 
     public static String Prefix = "&8[&eAmong&cUS&8] ";
     public static String version = "1.0.0";
-
     public static String[] DBArenaNames = {"name", "min_player", "max_player", "world", "spawn_locations", "waiting_location"};
     public static String[] DBArenaTypes = {"string", "int", "int", "string", "string", "string"};
-    public static List<Arena> loadedArenas;
+    // Tasks
+    public static String[] TASK_TYPES = {"DOWNLOAD", "UPLOAD", "CART", "RAC_COUNTER", "GUNNER", "LIGHTS", "REPEATER", "ELECTRIC_CONNECTING"};
+    public static List<String> TASK_TYPES_ARRAY_LIST = new ArrayList<String>(Arrays.asList(TASK_TYPES));
+    // Sabotages
+    public static String[] SABOTAGE_TYPES = {"REACTOR1","REACTOR2", "O2", "LIGHTS"};
+    public static List<String> SABOTAGE_TYPES_ARRAY_LIST = new ArrayList<String>(Arrays.asList(SABOTAGE_TYPES));
+
+    public static Location lobby;
+
+    public static boolean calculateIfArenaIsReady(Arena arena, Player player) {
+        boolean readyness = true;
+
+        if (arena.getWorldName() == null) {
+            readyness = false;
+        } else if (arena.getWaitingLocation() == null) {
+            readyness = false;
+        } else if (arena.getSpawnLocations() != null) {
+            if (arena.getSpawnLocations().size() != arena.getMax_playersCount()) {
+                readyness = false;
+            }
+        } else if (arena.getSpawnLocations() == null) {
+            readyness = false;
+        } else if (arena.getSabotagesLocations() != null) {
+            if (arena.getSabotagesLocations().size() == 0) {
+                readyness = false;
+            }
+
+        } else if (arena.getTasksLocations() != null) {
+            if (arena.getTasksLocations().size() == 0) {
+                readyness = false;
+            }
+        } else if (arena.getSabotagesLocations() == null) {
+            readyness = false;
+        } else if (arena.getTasksLocations() == null) {
+            readyness = false;
+        }
+        return readyness;
+    }
 
 }
