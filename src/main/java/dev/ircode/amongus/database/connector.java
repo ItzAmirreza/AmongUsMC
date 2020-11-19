@@ -90,4 +90,5 @@ public class connector {
         String Query = "DELETE FROM `" + Table_name + "` WHERE " + Condition_name + "='" + Condition_value + "' AND " +CCondition_name+ "='"+CCondition_value+"'";
         return getDatabaseConnection().createStatement().executeQuery(Query);
     }
+
 }

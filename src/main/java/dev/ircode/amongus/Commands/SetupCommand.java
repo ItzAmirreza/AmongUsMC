@@ -1,4 +1,5 @@
 package dev.ircode.amongus.Commands;
+
 import com.google.gson.Gson;
 import dev.ircode.amongus.AmongUs;
 import dev.ircode.amongus.ArenaManager.Arena;
@@ -12,6 +13,7 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.InvalidConfigurationException;
 import org.bukkit.entity.Player;
+import org.bukkit.event.player.PlayerQuitEvent;
 import org.json.simple.JSONArray;
 import org.w3c.dom.NameList;
 import org.yaml.snakeyaml.util.UriEncoder;
@@ -25,9 +27,17 @@ import java.util.List;
 public class SetupCommand implements CommandExecutor {
     public Gson g = new Gson();
 
+    private void getSummery(Player player, String ArenaName) throws SQLException {
+        if (connector.numRows("au_arenas", "name", ArenaName) != 0) {
+            // Soon ..
+        } else {
+            player.sendMessage(Utils.color("&c&lThere are not arena in that name !"));
+        }
+    }
+
+
     public boolean checkCreateArenaArgs(String min, String max) {
         boolean result = true;
-
 
 
         try {
@@ -72,6 +82,8 @@ public class SetupCommand implements CommandExecutor {
 
                     String[] values = {arenaname, Integer.toString(min_players), Integer.toString(max_players), "false", "{}", "false"};
                     connector.insert("au_arenas", Utils.DBArenaNames, values, Utils.DBArenaTypes);
+                    String[] meta_values = {arenaname, "VENTS", "{}"};
+                    connector.insert("au_arenas_meta", Utils.DBArenaMetaNames, meta_values, Utils.DBArenaMetaTypes);
                     Arena thearena = new Arena(arenaname, min_players, max_players);
                     Maps.loadedArenas.put(arenaname, thearena);
                     player.sendMessage(Utils.color("&aPerfect! Now Go to the waitingLobby of the game and execute: \n &e/au waitingLobby [Arena name]"));
@@ -121,7 +133,6 @@ public class SetupCommand implements CommandExecutor {
 
 
     }
-
 
 
     private void setSpawnPoint(Player player, String[] args) throws SQLException {
@@ -233,14 +244,14 @@ public class SetupCommand implements CommandExecutor {
 
             if (checkIfArenaExists(arenaname)) {
 
-                Arena thatarena = Maps.loadedArenas.get(arenaname);
-
                 if (Utils.TASK_TYPES_ARRAY_LIST.contains(args[2].toUpperCase())) {
                     if (connector.c2NumRows("au_arenas_meta", "name", arenaname, "meta_id", args[2].toUpperCase() + "_TASK_LOCATION") == 0) {
 
-                        Location C_Location = player.getTargetBlock(null, 5).getLocation();
-
-                        //????????? badesh chi?
+                        Location loc = player.getTargetBlock(null, 5).getLocation();
+                        String C_Location = Utils.convertLocToString(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), loc.getWorld().getName(), loc.getPitch(), loc.getYaw());
+                        String[] DBArenaMetas_value = {arenaname, args[2].toUpperCase() + "_TASK_LOCATION", C_Location};
+                        connector.insert("au_arenas_meta", Utils.DBArenaMetaNames, DBArenaMetas_value, Utils.DBArenaMetaTypes);
+                        player.sendMessage(Utils.color("you have set the task ! , you go next level with /au setsabotage [Arena name] or /au setvent [Arena name]"));
                     } else {
                         player.sendMessage("&aYou have set this task location past ! delete it with : /au deletetask <arenaname> " + args[2]);
                     }
@@ -296,7 +307,11 @@ public class SetupCommand implements CommandExecutor {
             if (Utils.SABOTAGE_TYPES_ARRAY_LIST.contains(args[2].toUpperCase())) {
                 if (connector.c2NumRows("au_arenas_meta", "name", arenaname, "meta_id", args[2].toUpperCase() + "_SABOTAGE_LOCATION") == 0) {
 
-                    Location C_Location = player.getTargetBlock(null, 5).getLocation();
+                    Location loc = player.getTargetBlock(null, 5).getLocation();
+                    String C_Location = Utils.convertLocToString(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), loc.getWorld().getName(), loc.getPitch(), loc.getYaw());
+                    String[] DBArenaMetas_value = {arenaname, args[2].toUpperCase() + "_SABOTAGE_LOCATION", C_Location};
+                    connector.insert("au_arenas_meta", Utils.DBArenaMetaNames, DBArenaMetas_value, Utils.DBArenaMetaTypes);
+                    player.sendMessage(Utils.color("&a&lSabotage " + args[2] + "has been set , you can set vents with /au setvent [Arena Name]"));
                 } else {
                     player.sendMessage("You have set this sabotage location past ! delete it with : /au deletesabotage <arenaname> " + args[2]);
                 }
@@ -327,7 +342,6 @@ public class SetupCommand implements CommandExecutor {
     }
 
 
-
     private void deleteArena(Player player, String[] args) throws SQLException {
 
         if (args.length == 2) {
@@ -337,6 +351,7 @@ public class SetupCommand implements CommandExecutor {
                 if (thatarena.getGameState() == GameState.WAITING) {
                     resetTheArena(thatarena);
                     connector.delete("au_arenas", "name", arenaname);
+                    connector.delete("au_arenas_meta", "name", arenaname);
                     Maps.loadedArenas.remove(arenaname);
 
                     player.sendMessage(Utils.color("&aArena &e" + arenaname + " &asuccessfully deleted!"));
@@ -357,6 +372,50 @@ public class SetupCommand implements CommandExecutor {
         }
 
 
+    }
+
+    private void setVent(Player player, String[] args) throws SQLException {
+        if (args.length == 2) {
+            String arenaname = args[1];
+            Location loc = player.getTargetBlock(null, 5).getLocation();
+            String C_Location = Utils.convertLocToString(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), loc.getWorld().getName(), loc.getPitch(), loc.getYaw());
+            String Query = "SELECT * FROM `au_arenas_meta` WHERE name='" + arenaname + "' AND meta_id='VENTS'";
+            String vents = connector.getDatabaseConnection().createStatement().executeQuery(Query).getString("meta_value");
+            ArrayList vents_arraylist = g.fromJson(vents, ArrayList.class);
+            if (!vents_arraylist.contains(C_Location)) {
+                vents_arraylist.add(C_Location);
+                String vents_encoded = g.toJson(vents_arraylist);
+                String Update_Query = "UPDATE `au_arenas_meta` SET `meta_value`='" + vents_encoded + "' WHERE name='" + arenaname + "' AND meta_id='VENTS'";
+                connector.getDatabaseConnection().createStatement().executeQuery(Update_Query);
+                player.sendMessage(Utils.color("Vent has been set!"));
+            } else {
+                player.sendMessage(Utils.color("This vent is already created  !"));
+            }
+        } else {
+            player.sendMessage("&4Bad usage: &c/au setvent <arenaname>");
+        }
+    }
+
+    private void deleteVent(Player player, String[] args) throws SQLException {
+        if (args.length == 2) {
+            String arenaname = args[1];
+            Location loc = player.getTargetBlock(null, 5).getLocation();
+            String C_Location = Utils.convertLocToString(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ(), loc.getWorld().getName(), loc.getPitch(), loc.getYaw());
+            String Query = "SELECT * FROM `au_arenas_meta` WHERE name='" + arenaname + "' AND meta_id='VENTS'";
+            String vents = connector.getDatabaseConnection().createStatement().executeQuery(Query).getString("meta_value");
+            ArrayList vents_arraylist = g.fromJson(vents, ArrayList.class);
+            if (vents_arraylist.contains(C_Location)) {
+                vents_arraylist.remove(C_Location);
+                String vents_encoded = g.toJson(vents_arraylist);
+                String Update_Query = "UPDATE `au_arenas_meta` SET `meta_value`='" + vents_encoded + "' WHERE name='" + arenaname + "' AND meta_id='VENTS'";
+                connector.getDatabaseConnection().createStatement().executeQuery(Update_Query);
+                player.sendMessage(Utils.color("Vent has been deleted!"));
+            } else {
+                player.sendMessage("This vent it doesn't set yet !");
+            }
+        } else {
+            player.sendMessage("&4Bad usage: &c/au deletevent <arenaname> (Locking at vent)");
+        }
     }
 
     @Override
@@ -385,7 +444,8 @@ public class SetupCommand implements CommandExecutor {
                         throwables.printStackTrace();
                     }
 
-                }// - /au setspawn
+                }
+                // - /au setspawn [Arena name]
                 else if (args[0].equalsIgnoreCase("setspawn")) {
 
                     try {
@@ -395,6 +455,7 @@ public class SetupCommand implements CommandExecutor {
                     }
 
                 }
+                // - /au removespawn [Arena name] - (Removing Last Spawn Point)
                 else if (args[0].equalsIgnoreCase("removespawn")) {
 
                     try {
@@ -404,6 +465,8 @@ public class SetupCommand implements CommandExecutor {
                     }
 
                 }
+                // - /au settask [Arena name] [Task Type] - (Set New task)
+
                 else if (args[0].equalsIgnoreCase("settask")) {
 
                     try {
@@ -413,6 +476,7 @@ public class SetupCommand implements CommandExecutor {
                     }
 
                 }
+                // - /au deletetask [Arena name] [Task Type] - (delete task)
 
                 else if (args[0].equalsIgnoreCase("deletetask")) {
 
@@ -423,6 +487,7 @@ public class SetupCommand implements CommandExecutor {
                     }
 
                 }
+                // - /au setSabotage [Arena name] [Task Type] - (set Sabotage)
 
                 else if (args[0].equalsIgnoreCase("setsabotage")) {
 
@@ -433,6 +498,7 @@ public class SetupCommand implements CommandExecutor {
                     }
 
                 }
+                // - /au deletesabotage [Arena name] [Task Type] - (delete Sabotage)
 
                 else if (args[0].equalsIgnoreCase("deletesabotage")) {
 
@@ -443,7 +509,7 @@ public class SetupCommand implements CommandExecutor {
                     }
 
                 }
-
+                // - /au deletesabotage [Arena name]- (delete arena)
                 else if (args[0].equalsIgnoreCase("deletearena")) {
 
                     try {
@@ -453,9 +519,27 @@ public class SetupCommand implements CommandExecutor {
                     }
 
                 }
+                else if (args[0].equalsIgnoreCase("setvent")) {
+
+                    try {
+                        setVent(player, args);
+                    } catch (SQLException throwables) {
+                        throwables.printStackTrace();
+                    }
+
+                }
+                else if (args[0].equalsIgnoreCase("deletevent")) {
+
+                    try {
+                        deleteVent(player, args);
+                    } catch (SQLException throwables) {
+                        throwables.printStackTrace();
+                    }
+
+                }
             } else {
                 try {
-                    for (String msg: Utils.getMessages().getStringList("messages.help")) {
+                    for (String msg : Utils.getMessages().getStringList("messages.help")) {
                         player.sendMessage(Utils.color(msg));
                     }
                 } catch (IOException e) {

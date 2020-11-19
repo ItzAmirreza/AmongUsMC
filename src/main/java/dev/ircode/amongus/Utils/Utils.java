@@ -65,6 +65,8 @@ public class Utils {
     public static String version = "1.0.0";
     public static String[] DBArenaNames = {"name", "min_player", "max_player", "world", "spawn_locations", "waiting_location"};
     public static String[] DBArenaTypes = {"string", "int", "int", "string", "string", "string"};
+    public static String[] DBArenaMetaNames = {"name", "meta_id", "meta_value"};
+    public static String[] DBArenaMetaTypes = {"string", "string", "string"};
     // Tasks
     public static String[] TASK_TYPES = {"DOWNLOAD", "UPLOAD", "CART", "RAC_COUNTER", "GUNNER", "LIGHTS", "REPEATER", "ELECTRIC_CONNECTING"};
     public static List<String> TASK_TYPES_ARRAY_LIST = new ArrayList<String>(Arrays.asList(TASK_TYPES));
